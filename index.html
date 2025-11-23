@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Công Cụ Tạo Mã QR Nhanh</title>
+    <!-- Thư viện Tailwind CSS để làm đẹp giao diện -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Thư viện tạo QR Code (chạy trực tiếp trên trình duyệt, không cần server) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Font chữ Google -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .qr-container canvas, .qr-container img {
+            margin: 0 auto;
+            border: 8px solid white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden">
+        <!-- Header -->
+        <div class="bg-indigo-600 p-6 text-center">
+            <h1 class="text-2xl font-bold text-white mb-2">Tạo Mã QR Online</h1>
+            <p class="text-indigo-100 text-sm">Nhập link Google Drive hoặc bất kỳ link nào</p>
+        </div>
+
+        <!-- Body -->
+        <div class="p-6 space-y-6">
+            
+            <!-- Input Area -->
+            <div>
+                <label for="urlInput" class="block text-sm font-medium text-gray-700 mb-2">Đường link của bạn</label>
+                <div class="relative">
+                    <input type="text" id="urlInput" 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition"
+                        placeholder="Ví dụ: https://drive.google.com/..."
+                        onkeypress="handleEnter(event)">
+                </div>
+                <p id="errorMsg" class="text-red-500 text-xs mt-2 hidden">Vui lòng nhập đường link!</p>
+            </div>
+
+            <!-- Generate Button -->
+            <button onclick="generateQR()" 
+                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition duration-200 transform active:scale-95 flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Tạo Mã QR Ngay
+            </button>
+
+            <!-- Result Area (Hidden by default) -->
+            <div id="resultArea" class="hidden flex-col items-center animate-fade-in-up">
+                <div class="w-full border-t border-gray-100 my-4"></div>
+                
+                <h3 class="text-gray-800 font-semibold mb-4">Mã QR của bạn:</h3>
+                
+                <!-- QR Place -->
+                <div id="qrcode" class="qr-container mb-6"></div>
+
+                <!-- Download Button -->
+                <button onclick="downloadQR()" 
+                    class="text-indigo-600 hover:text-indigo-800 font-medium text-sm flex items-center gap-2 hover:underline">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Tải ảnh về máy
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="bg-gray-50 px-6 py-4 text-center">
+            <p class="text-xs text-gray-500">Hoạt động vĩnh viễn • Không lưu trữ dữ liệu</p>
+        </div>
+    </div>
+
+    <script>
+        // Biến lưu trữ đối tượng QR
+        let qrcodeObj = null;
+
+        function handleEnter(e) {
+            if (e.key === 'Enter') generateQR();
+        }
+
+        function generateQR() {
+            const input = document.getElementById('urlInput');
+            const errorMsg = document.getElementById('errorMsg');
+            const resultArea = document.getElementById('resultArea');
+            const qrContainer = document.getElementById('qrcode');
+            const link = input.value.trim();
+
+            // Reset trạng thái
+            errorMsg.classList.add('hidden');
+            
+            if (!link) {
+                errorMsg.classList.remove('hidden');
+                input.focus();
+                return;
+            }
+
+            // Hiển thị khu vực kết quả
+            resultArea.classList.remove('hidden');
+            resultArea.classList.add('flex'); // Đảm bảo flex layout
+
+            // Xóa mã cũ nếu có
+            qrContainer.innerHTML = "";
+
+            // Tạo mã QR mới
+            // Sử dụng thư viện QRCode.js
+            qrcodeObj = new QRCode(qrContainer, {
+                text: link,
+                width: 200,
+                height: 200,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H // Mức sửa lỗi cao (High)
+            });
+
+            // Cuộn xuống kết quả (cho mobile)
+            setTimeout(() => {
+                resultArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
+        }
+
+        function downloadQR() {
+            const qrContainer = document.getElementById('qrcode');
+            const img = qrContainer.querySelector('img');
+
+            if (img && img.src) {
+                const link = document.createElement('a');
+                link.href = img.src;
+                link.download = 'Mã_QR_Cua_Toi.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                // Fallback nếu thư viện render bằng canvas
+                const canvas = qrContainer.querySelector('canvas');
+                if (canvas) {
+                    const link = document.createElement('a');
+                    link.href = canvas.toDataURL("image/png");
+                    link.download = 'Mã_QR_Cua_Toi.png';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
